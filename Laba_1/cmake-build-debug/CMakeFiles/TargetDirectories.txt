@@ -1,0 +1,3 @@
+/home/mark/CLionProjects/University/Lesson 3/Laba_1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/mark/CLionProjects/University/Lesson 3/Laba_1/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/mark/CLionProjects/University/Lesson 3/Laba_1/cmake-build-debug/CMakeFiles/Laba_1.dir
