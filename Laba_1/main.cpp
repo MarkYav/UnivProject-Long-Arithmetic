@@ -31,8 +31,8 @@ struct LongNumber
             if (str[i] != '.')
                 arrayOfNumbers.push_back(str[i] - 48);
             else {
-                dot = i;
                 lengTop--;
+                dot = str.size() - 1 - i;
             }
         }
     }
@@ -83,9 +83,9 @@ struct LongNumber
     }
 
     bool CompareNumber(const LongNumber &N1, const LongNumber &N2){ //return 1 if N1 >= N2, return 0 if N1 < N2
-        if (N1.lengTop > N2.lengTop)
+        if (N1.lengTop - N1.dot > N2.lengTop - N2.dot)
             return true;
-        else if (N1.lengTop < N2.lengTop)
+        else if (N1.lengTop - N1.dot < N2.lengTop - N2.dot)
             return false;
         else {
             for (int i = N1.lengTop - 1; i >= 0; i--){
@@ -118,9 +118,21 @@ struct LongNumber
         }
     }
 
+    void MathcDots(LongNumber &B, LongNumber &S){
+        if (B.dot < S.dot)
+            for (int i = 0; i < S.dot - B.dot; i++){
+                B.arrayOfTopNumbers.emplace(B.arrayOfTopNumbers.begin(), 0);
+                B.lengTop++;
+                B.dot++;
+            }
+        else if (B.dot > S.dot)
+            MathcDots(S, B);
+    }
+
     LongNumber SumOfTwo(const LongNumber &B, const LongNumber &S){
         LongNumber Bigger = B;
         LongNumber Smaller = S;
+        MathcDots(Bigger, Smaller);
         int maxSize = FindMaxLeng(Bigger.lengTop, Smaller.lengTop);
         for (int i = 0; i < maxSize; i++){
             if ( i < Bigger.lengTop && i < Smaller.lengTop){
@@ -219,6 +231,7 @@ struct LongNumber
     void operator= (const LongNumber &other) {
         this->lengTop = other.lengTop;
         this->sing = other.sing;
+        this->dot = other.dot;
 
         this->arrayOfTopNumbers.clear();
 
@@ -252,6 +265,6 @@ int main() {
     cin >> str1 >> str2;
     firstNumber.SetNumber(str1);
     secondNumber.SetNumber(str2);
-    firstNumber = firstNumber * secondNumber;
+    firstNumber = firstNumber - secondNumber;
     firstNumber.GetNumber();
 }
