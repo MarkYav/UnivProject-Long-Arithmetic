@@ -169,7 +169,7 @@ struct LongNumber
         if (arrayOfTopNumbers[lengTop - 1] == 0 && lengTop - 1 - dot > 0) {
             arrayOfTopNumbers.erase(arrayOfTopNumbers.end() - 1);
             lengTop--;
-            ZipLastPartOfNumber();
+            ZipForvardPartOfNumber();
         }
 
         /*if (arrayOfTopNumbers[0] == 0) {
@@ -184,7 +184,7 @@ struct LongNumber
             arrayOfTopNumbers.erase(arrayOfTopNumbers.begin());
             lengTop--;
             dot--;
-            ZipForvardPartOfNumber();
+            ZipLastPartOfNumber();
         }
 
         /*if (dot > 0 && arrayOfTopNumbers[lengTop - 1] == 0) {
@@ -236,6 +236,25 @@ struct LongNumber
         result.lengTop = result.arrayOfTopNumbers.size();
 
         //TODO костыль: не работает присвоение; сделал через return
+        //*this = result;
+        return result;
+    }
+
+    LongNumber ConvertFromBinarToDecimal() {
+        LongNumber result;
+
+        result.arrayOfTopNumbers.push_back(0);
+        result.lengTop = 1;
+        result.sing = sing;
+        result.base = 10;
+
+        for (double i = 0; i < this->lengTop; i++){
+            double x = this->arrayOfTopNumbers[i] * pow(2, i);
+            LongNumber midNumber(to_string(x));
+            result = result + midNumber;
+        }
+
+        result.ZipNumber();
         //*this = result;
         return result;
     }
@@ -495,5 +514,6 @@ int main() {
     //firstNumber = firstNumber ^ secondNumber;
     //firstNumber = firstNumber % secondNumber;
     //firstNumber = firstNumber.ConvertToOtherBase(base);
+    //firstNumber = firstNumber.ConvertFromBinarToDecimal();
     firstNumber.GetNumber();
 }
