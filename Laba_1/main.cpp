@@ -4,20 +4,9 @@
 #include <string>
 #include <sstream>
 #include <math.h>
+#include <stdlib.h>
 
 using namespace std;
-
-/*struct LongNumber;
-struct LongFunction;*/
-
-/*void SumOfLongNumbers(LongNumber& LN1, LongNumber& LN2, LongNumber& Result) {
-    Result.LengTop = 0;
-    //LengTop = (LN1 > LN2) ? LN1 : LN2;.
-
-    for (int i = Leng -1; i >= 0; i++){
-
-    }
-}*/
 
 struct LongNumber
 {
@@ -54,7 +43,7 @@ struct LongNumber
                 break;
         }
         SetPartOfNumber(lengTop, arrayOfTopNumbers, str);
-        ZipNumber();
+        ZipNumber(arrayOfTopNumbers, lengTop);
     }
 
     bool IsHasNumbers(){
@@ -165,11 +154,11 @@ struct LongNumber
             MatchDots(S, B);
     }
 
-    void ZipForvardPartOfNumber() {
-        if (arrayOfTopNumbers[lengTop - 1] == 0 && lengTop - 1 - dot > 0) {
-            arrayOfTopNumbers.erase(arrayOfTopNumbers.end() - 1);
-            lengTop--;
-            ZipForvardPartOfNumber();
+    void ZipForvardPartOfNumber(vector < int > &arrayOfNumbers, int &leng) {
+        if (arrayOfNumbers[leng - 1] == 0 && leng - 1 - dot > 0) {
+            arrayOfNumbers.erase(arrayOfNumbers.end() - 1);
+            leng--;
+            ZipForvardPartOfNumber(arrayOfNumbers, leng);
         }
 
         /*if (arrayOfTopNumbers[0] == 0) {
@@ -179,12 +168,12 @@ struct LongNumber
         }*/
     }
 
-    void ZipLastPartOfNumber() {
-        if (arrayOfTopNumbers[0] == 0 && dot > 0) {
-            arrayOfTopNumbers.erase(arrayOfTopNumbers.begin());
-            lengTop--;
+    void ZipLastPartOfNumber(vector < int > &arrayOfNumbers, int &leng) {
+        if (arrayOfNumbers[0] == 0 && dot > 0) {
+            arrayOfNumbers.erase(arrayOfNumbers.begin());
+            leng--;
             dot--;
-            ZipLastPartOfNumber();
+            ZipLastPartOfNumber(arrayOfNumbers, leng);
         }
 
         /*if (dot > 0 && arrayOfTopNumbers[lengTop - 1] == 0) {
@@ -194,9 +183,9 @@ struct LongNumber
         }*/
     }
 
-    void ZipNumber() {
-        ZipForvardPartOfNumber();
-        ZipLastPartOfNumber();
+    void ZipNumber(vector < int > &arrayOfNumbers, int &leng) {
+        ZipForvardPartOfNumber(arrayOfNumbers, leng);
+        ZipLastPartOfNumber(arrayOfNumbers, leng);
     }
 
     LongNumber ConvertToOtherBase(int newBase) {
@@ -254,7 +243,7 @@ struct LongNumber
             result = result + midNumber;
         }
 
-        result.ZipNumber();
+        result.ZipNumber(result.arrayOfTopNumbers, result.lengTop);
         //*this = result;
         return result;
     }
@@ -293,16 +282,25 @@ struct LongNumber
                     }
                 }
             }
-            else if (i == Bigger.lengTop){
+            else if (i >= Bigger.lengTop){
                 Bigger.arrayOfTopNumbers.push_back(1);
                 Bigger.lengTop++; //надо снова задать leng
-            } else if (i == Bigger.lengTop){
-                break;
+            } else if (i >= Smaller.lengTop){
+                if (Bigger.arrayOfTopNumbers[i] >= 10){
+                    Bigger.arrayOfTopNumbers[i] -= 10;
+                    if (i + 1 < Bigger.lengTop){
+                        Bigger.arrayOfTopNumbers[i+1]++;
+                    }
+                    else {
+                        Bigger.arrayOfTopNumbers.push_back(1);
+                        Bigger.lengTop++;
+                    }
+                }
             }
         }
         lengTop = Bigger.arrayOfTopNumbers.size();
 
-        Bigger.ZipNumber();
+        Bigger.ZipNumber(Bigger.arrayOfTopNumbers, Bigger.lengTop);
         return Bigger;
     }
 
@@ -336,9 +334,11 @@ struct LongNumber
     LongNumber operator* (const LongNumber &other) {
         LongNumber subArray[other.lengTop];
         LongNumber result;
-        result.sing = sing * other.sing;
-        result.dot = dot + other.dot;
-        result.lengTop = 0;
+
+        int n = dot + other.dot;
+
+        result.lengTop = 1;
+        result.arrayOfTopNumbers.push_back(0);
         for (int i = 0; i < other.lengTop; i++){
             subArray[i].lengTop = 0;
             for (int p = 0; p < i; p++) {
@@ -347,7 +347,7 @@ struct LongNumber
             }
             int inherter = 0;
             for (int k = 0; k < lengTop; k++){
-                if (arrayOfTopNumbers[k]*other.arrayOfTopNumbers[i] < 10) {
+                if (arrayOfTopNumbers[k]*other.arrayOfTopNumbers[i] + inherter < 10) {
                     if (inherter > 0){
                         subArray[i].arrayOfTopNumbers.push_back(arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i] + inherter);
                         inherter = 0;
@@ -356,21 +356,25 @@ struct LongNumber
                         subArray[i].arrayOfTopNumbers.push_back(arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i]);
                     subArray[i].lengTop++;
                 } else {
-                    subArray[i].arrayOfTopNumbers.push_back(arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i] % 10);
-                    inherter = (arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i]) / 10;
+                    int m = (arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i] + inherter) % 10;
+                    subArray[i].arrayOfTopNumbers.push_back(m);
+                    //inherter = 0;
+                    inherter = (arrayOfTopNumbers[k] * other.arrayOfTopNumbers[i] + inherter) / 10;
                     subArray[i].lengTop ++;
                 }
             }
             if (inherter > 0) {
                 subArray[i].arrayOfTopNumbers.push_back(inherter);
-                subArray[i].lengTop += inherter;
+                subArray[i].lengTop += 1;
                 inherter = 0;
             }
             result = result + subArray[i];
         }
         result.lengTop = result.arrayOfTopNumbers.size();
 
-        result.ZipNumber();
+        result.dot = n;
+        result.sing = sing * other.sing;
+        result.ZipNumber(result.arrayOfTopNumbers, result.lengTop);
         return result;
     }
 
@@ -385,10 +389,24 @@ struct LongNumber
     }
 
     LongNumber operator/ (const LongNumber &o) {
+        int s = sing * o.sing;
+        this->sing = 1;
+
+        if (o.lengTop == 1 && o.arrayOfTopNumbers[0] == 0){
+            cout << "wrong input" << endl;
+            exit(0);
+        }
+        if (this->lengTop == 1 && this->arrayOfTopNumbers[0] == 0){
+            cout << '0' << endl;
+            exit(0);
+        }
         LongNumber result;
         LongNumber other = o;
         result.lengTop = 0;
-        result.sing = sing * other.sing;
+
+        result.sing = 1;
+        other.sing = 1;
+
         result.dot = 3;
 
         MatchDots(*this, other);
@@ -416,11 +434,20 @@ struct LongNumber
         }
         reverse(result.arrayOfTopNumbers.begin(), result.arrayOfTopNumbers.end());
 
-        result.ZipNumber();
+        result.sing = s;
+        result.ZipNumber(result.arrayOfTopNumbers, result.lengTop);
         return result;
     }
 
     LongNumber operator^ (const LongNumber &o) {
+        if (o.lengTop == 1 && o.arrayOfTopNumbers[0] == 0){
+            cout << "wrong input" << endl;
+            return *this;
+        }
+        if (this->sing < 0 || o.sing < 0){
+            cout << "wrong input" << endl;
+            return *this;
+        }
         LongNumber result;
         LongNumber other = o;
         result.lengTop = 0;
@@ -445,11 +472,19 @@ struct LongNumber
         }
         reverse(result.arrayOfTopNumbers.begin(), result.arrayOfTopNumbers.end());
 
-        result.ZipNumber();
+        result.ZipNumber(result.arrayOfTopNumbers, result.lengTop);
         return result;
     }
 
     LongNumber operator% (const LongNumber &other) {
+        if (other.lengTop == 1 && other.arrayOfTopNumbers[0] == 0){
+            cout << "wrong input" << endl;
+            return *this;
+        }
+        if (this->sing < 0 || other.sing < 0){
+            cout << "wrong input" << endl;
+            return *this;
+        }
         LongNumber th1, th2;
         th1 = *this;
         th2 = *this;
@@ -474,7 +509,7 @@ struct LongNumber
             arrayOfTopNumbers.push_back(other.arrayOfTopNumbers[i]);
         }
 
-        ZipNumber();
+        ZipNumber(arrayOfTopNumbers, lengTop);
     }
 
     // constructors
@@ -486,34 +521,364 @@ struct LongNumber
 
 };
 
-struct LongFruction
+struct LongFruction : LongNumber
 {
-    /*LongFruction(string str) {
-        LongNumber TopPart(str);
+    int lengLow;
+    vector < int > arrayOfLowNumbers;
+
+    // functions of LongFruction class
+    void IncreaseDot() {
+        while (dot < 0) {
+            arrayOfTopNumbers.emplace(arrayOfTopNumbers.begin(), 0);
+            lengTop++;
+            dot++;
+        }
+    }
+
+    /*void ZipLastPartOfLowNumber(vector < int > &arrayOfNumbers, int &leng) {
+        if (arrayOfNumbers[0] == 0 && dot > 0) {
+            arrayOfNumbers.erase(arrayOfNumbers.begin());
+            leng--;
+            dot++;
+            ZipLastPartOfLowNumber(arrayOfNumbers, leng);
+        }
+    }
+
+    void ZipLowNumber(vector < int > &arrayOfNumbers, int &leng) {
+        ZipForvardPartOfNumber(arrayOfNumbers, leng);
+        ZipLastPartOfLowNumber(arrayOfNumbers, leng);
     }*/
 
-    LongNumber TopPart;
-    int LengLow;
-    vector < int > ArrayOfLowNumbers;
+    void SetLowPartOfNumber(int leng, vector < int > &arrayOfNumbers, string str){
+        int k = str.size() - leng;
+        for (int i = str.size() - 1; i >= k; i--){
+            if (str[i] != '.')
+                arrayOfNumbers.push_back(str[i] - 48);
+            else {
+                lengLow--;
+                dot -= str.size() - 1 - i;
+            }
+        }
+        IncreaseDot();
+    }
+
+    void SetLowNumber(string str){
+        lengLow = str.size();
+        SetLowPartOfNumber(lengLow, arrayOfLowNumbers, str);
+        if (lengLow == 1 && arrayOfLowNumbers[0] == 0){
+            cout << "wrong input";
+            exit(0);
+        }
+        ZipForvardPartOfNumber(arrayOfLowNumbers, lengLow);
+    }
+
+    void SetFruction(string str1, string str2) {
+        SetNumber(str1);
+        SetLowNumber(str2);
+    }
+
+    LongNumber FindNSD(LongNumber A1, LongNumber A2){
+        if (CompareNumber(A1, A2) && CompareNumber(A2, A1))
+            return A1;
+        else if (CompareNumber(A1, A2)) {
+            A1 = A1 - A2;
+            return FindNSD(A1, A2);
+        } else {
+            A2 = A2 - A1;
+            return FindNSD(A1, A2);
+        }
+    }
+
+    /*LongNumber FindNSK(LongNumber A1, LongNumber A2) {
+        LongNumber NSD = FindNSD(A1, A2);
+        return (A1 * A2) / NSD;
+    }*/
+
+    void MakeShorter() {
+        int n = sing;
+        this->sing = 1;
+        LongFruction th = *this;
+        LongNumber top = th;
+        th.SwapFruction();
+        LongNumber low = th;
+        top.sing = 1;
+        low.sing = 1;
+        LongNumber NSD = FindNSD(top, low);
+        top = top / NSD;
+        low = low / NSD;
+        *this = top;
+        *this ^= low;
+        this->sing = n;
+
+    }
+
+    void OutputNumber() {
+        for (int i = lengLow - 1; i >= 0; i--){
+            if (arrayOfLowNumbers[i] < 10)
+                cout << arrayOfLowNumbers[i];
+            else
+                switch (arrayOfLowNumbers[i]) {
+                    case 10: cout << "A"; break;
+                    case 11: cout << "B"; break;
+                    case 12: cout << "C"; break;
+                    case 13: cout << "D"; break;
+                    case 14: cout << "E"; break;
+                    case 15: cout << "F"; break;
+                }
+        }
+    }
+
+    void GetFruction() {
+        LongFruction A1 = *this, A2 = *this;
+        A2.SwapFruction();
+        A1 = A1 - A2;
+        if (A1.lengTop == 1 && A1.arrayOfTopNumbers[0] == 0){
+            cout << '1';
+            return;
+        }
+
+        LongFruction copy = *this;
+        LongNumber top = copy;
+        copy.SwapFruction();
+        LongNumber low = copy;
+
+        top.sing = 1;
+        low.sing = 1;
+        LongNumber core = top ^ low;
+        core.sing = sing;
+
+        copy = *this;
+        top = copy;
+        copy.SwapFruction();
+        low = copy;
+
+        top.sing = 1;
+        low.sing = 1;
+        LongNumber add = top % low;
+        add.sing = sing;
+
+        if (!(core.lengTop == 1 && core.arrayOfTopNumbers[0] == 0)) {
+            core.GetNumber();
+            cout << " ";
+        }
+
+        if (add.IsHasNumbers()) {
+            add.GetNumber();
+            cout << "/";
+            OutputNumber();
+        }
+
+        /*
+        GetNumber();
+        if (IsHasNumbers()) {
+            cout << "|||";
+            OutputNumber();
+        }*/
+    }
+
+    void SwapFruction() {
+        LongFruction n = *this;
+        this->arrayOfTopNumbers.clear();
+        this->arrayOfLowNumbers.clear();
+        for (int i = 0; i < n.lengTop; i++){
+            arrayOfLowNumbers.push_back(n.arrayOfTopNumbers[i]);
+        }
+        for (int i = 0; i < n.lengLow; i++){
+            arrayOfTopNumbers.push_back(n.arrayOfLowNumbers[i]);
+        }
+        this->lengTop = n.lengLow;
+        this->lengLow = n.lengTop;
+    }
+
+    void ToSameBotton(LongFruction f1, LongFruction f2) {
+        LongFruction f1Copy = f1;
+        LongFruction f2Copy = f2;
+        f1Copy.SwapFruction();
+        f2Copy.SwapFruction();
+        LongNumber f1C = f1Copy;
+        LongNumber f2C = f2Copy;
+        f1 = f1 * f2C;
+        f2 = f2 * f1C;
+    }
+
+    LongFruction operator* (const LongFruction &o) {
+        LongFruction th = *this;
+        LongFruction other = o;
+        th.SwapFruction();
+        other.SwapFruction();
+
+        LongFruction result = *this;
+
+        LongNumber thTop = *this;
+        LongNumber otherTop = o;
+        thTop = thTop * otherTop;
+        result = thTop;
+
+        LongNumber thLow = th;
+        LongNumber otherLow = other;
+        thLow = thLow * otherLow;
+        result ^= thLow;
+
+        return result;
+    }
+
+    LongFruction operator* (const LongNumber &o) {
+        LongFruction th = *this;
+        LongNumber otherTop = o;
+        th.SwapFruction();
+
+        LongFruction result = *this;
+
+        LongNumber thTop = *this;
+        thTop = thTop * otherTop;
+        result = thTop;
+
+        LongNumber thLow = th;
+        thLow = thLow * otherTop;
+        result ^= thLow;
+
+        return result;
+    }
+
+    LongFruction operator/ (const LongFruction &o) {
+        if (o.lengTop == 1 && o.arrayOfTopNumbers[0] == 0){
+            cout << "attemp to divide on zero";
+            exit(0);
+        }
+        LongFruction th = *this;
+        LongFruction other = o;
+        th.SwapFruction();
+        other.SwapFruction();
+
+        LongFruction result = *this;
+
+        LongNumber thTop = *this;
+        LongNumber otherTop = other;
+        thTop = thTop * otherTop;
+        result = thTop;
+
+        LongNumber thLow = th;
+        LongNumber otherLow = o;
+        thLow = thLow * otherLow;
+        result ^= thLow;
+
+        return result;
+    }
+
+    LongFruction operator+ (const LongFruction &o) {
+        LongFruction other = o;
+        LongFruction th= *this;
+        ToSameBotton(th, other);
+
+        LongNumber th1 = th;
+        LongNumber other1 = other;
+        th1 = th1 + other1;
+
+        LongFruction result = th;
+        result = th1;
+
+        return result;
+    }
+
+    LongFruction operator- (const LongFruction &o) {
+        LongFruction other = o;
+        other.sing *= -1;
+        return *this + other;
+    }
+
+    void operator= (const LongFruction &other) {
+        this->lengTop = other.lengTop;
+        this->sing = other.sing;
+        this->dot = other.dot;
+        this->presice = other.presice;
+        this->base = other.base;
+
+        this->lengLow = other.lengLow;
+
+        this->arrayOfTopNumbers.clear();
+
+        for (int i = 0; i < this->lengTop; i++){
+            arrayOfTopNumbers.push_back(other.arrayOfTopNumbers[i]);
+        }
+
+        this->arrayOfLowNumbers.clear();
+
+        for (int i = 0; i < this->lengLow; i++){
+            arrayOfLowNumbers.push_back(other.arrayOfLowNumbers[i]);
+        }
+
+        //ZipNumber(arrayOfTopNumbers, lengTop);
+    }
+
+    void operator= (const LongNumber &other) {
+        this->lengTop = other.lengTop;
+        this->sing = other.sing;
+        this->dot = other.dot;
+        this->presice = other.presice;
+        this->base = other.base;
+
+        this->arrayOfTopNumbers.clear();
+
+        for (int i = 0; i < this->lengTop; i++){
+            arrayOfTopNumbers.push_back(other.arrayOfTopNumbers[i]);
+        }
+
+        //ZipNumber(arrayOfTopNumbers, lengTop);
+    }
+
+    void operator^= (const LongNumber &other) {
+        this->lengLow = other.lengTop;
+
+        this->arrayOfLowNumbers.clear();
+
+        for (int i = 0; i < this->lengLow; i++) {
+            arrayOfLowNumbers.push_back(other.arrayOfTopNumbers[i]);
+        }
+    }
+
+    //constructors
+    LongFruction(string str1, string str2) {
+        SetNumber(str1);
+        SetLowNumber(str2);
+    }
+
+    LongFruction() {}
 };
 
 int main() {
     LongNumber firstNumber, secondNumber;
-    string str1;
-    string str2;
-    int base;
-    cin >> str1;
-    cin >> str2;
-    //cin >> base;
+    string str1, str2, str3, str4;
+
+    char in;
+    cin >> in;
+
+    cin >> str1 >> str2;
     firstNumber.SetNumber(str1);
     secondNumber.SetNumber(str2);
-    firstNumber = firstNumber + secondNumber;
-    //firstNumber = firstNumber - secondNumber;
-    //firstNumber = firstNumber * secondNumber;
-    //firstNumber = firstNumber / secondNumber;
-    //firstNumber = firstNumber ^ secondNumber;
-    //firstNumber = firstNumber % secondNumber;
-    //firstNumber = firstNumber.ConvertToOtherBase(base);
-    //firstNumber = firstNumber.ConvertFromBinarToDecimal();
+    switch (in) {
+        case '+': firstNumber = firstNumber + secondNumber; break;
+        case '-': firstNumber = firstNumber - secondNumber; break;
+        case '*': firstNumber = firstNumber * secondNumber; break;
+        case '/': firstNumber = firstNumber / secondNumber; break;
+        case '%': firstNumber = firstNumber % secondNumber; break;
+        case 'c': int base; cin >> base;
+                  firstNumber = firstNumber.ConvertToOtherBase(base); break;
+        case 'b': firstNumber = firstNumber.ConvertFromBinarToDecimal(); break;
+    }
     firstNumber.GetNumber();
+
+    /*
+    cin >> str1 >> str2 >> str3 >> str4;
+    LongFruction firstFruction(str1, str2);
+    LongFruction secondFruction(str3, str4);
+    switch (in) {
+        case '+': firstFruction = firstFruction + secondFruction; break;
+        case '-': firstFruction = firstFruction - secondFruction;; break;
+        case '*': firstFruction = firstFruction * secondFruction; break;
+        case '/': firstFruction = firstFruction / secondFruction; break;
+    }
+    firstNumber.GetNumber();
+    firstFruction.MakeShorter();
+    firstFruction.GetFruction();
+     */
 }
